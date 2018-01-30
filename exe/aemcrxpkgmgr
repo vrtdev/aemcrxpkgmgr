@@ -1,0 +1,128 @@
+#!/usr/bin/env ruby
+
+require 'getoptlong'
+require 'aemcrxpkgmgr'
+
+def clidoc
+  puts <<-CLIDOC
+
+    #{$PROGRAM_NAME} [OPTION]
+
+    --help:
+    show help
+
+    -a --action:
+    Action to perform [query|delete_crx_zip]. Default 'query'
+
+    -h, --host:
+    host to connect to. Default 'http://localhost:4502'
+
+    -u --user:
+    username. Default 'admin'
+
+    -p --pass:
+    password
+
+    -q --query
+    query string
+
+    -v --versions:
+    include other versions of package
+
+    -k --keys:
+    Keys to extract from result. Default [name description version group path]
+    Pass as comma-delimited string
+
+    -o --output:
+    output format [single|yaml|json|pp|ruby]. Default 'yaml'
+    single: outputs a single result record, exit 1 if more records exist
+    yaml, json: ...
+    pp: Pretty Print
+    ruby: native Array/Hash output
+
+    -d --debug:
+    debug ....
+
+  CLIDOC
+end
+
+opts = GetoptLong.new(
+  ['--help', GetoptLong::NO_ARGUMENT],
+  ['--action', '-a', GetoptLong::REQUIRED_ARGUMENT],
+  ['--host', '-h', GetoptLong::REQUIRED_ARGUMENT],
+  ['--user', '-u', GetoptLong::REQUIRED_ARGUMENT],
+  ['--pass', '-p', GetoptLong::REQUIRED_ARGUMENT],
+  ['--query', '-q', GetoptLong::REQUIRED_ARGUMENT],
+  ['--versions', '-v', GetoptLong::NO_ARGUMENT],
+  ['--keys', '-k', GetoptLong::REQUIRED_ARGUMENT],
+  ['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
+  ['--debug', '-d', GetoptLong::OPTIONAL_ARGUMENT]
+)
+
+action = 'query'
+host = 'http://localhost:4502'
+user = 'admin'
+pass = ENV['AEM_PASSWORD']
+query = ''
+includeversions = false
+keys_to_extract = %w[name description version group path]
+output = 'yaml'
+debug = 0
+
+# rubocop:disable Metrics/BlockLength
+opts.each do |opt, arg|
+  case opt
+  when '--help'
+    clidoc
+    exit
+  when '--action'
+    action = arg
+  when '--host'
+    host = arg
+  when '--user'
+    user = arg
+  when '--pass'
+    pass = arg
+  when '--query'
+    query = arg
+  when '--versions'
+    includeversions = true
+  when '--keys'
+    keys_to_extract = arg.split(/\s*,\s*/)
+  when '--output'
+    output = arg
+  when '--debug'
+    debug = if arg == ''
+              1
+            else
+              arg.to_i
+            end
+  end
+end
+# rubocop:enable Metrics/BlockLength
+
+aemcrxpkgmgr = AemCrxPkgMgr.new(
+  host: host,
+  user: user,
+  pass: pass,
+  includeversions: includeversions,
+  keys_to_extract: keys_to_extract,
+  output: output,
+  debug: debug
+)
+
+case action
+when 'delete_crx_zip'
+  aemcrxpkgmgr.output = 'ruby'
+  aemcrxpkgmgr.keys_to_extract = ['path']
+  list = aemcrxpkgmgr.pkg_query query
+  result = aemcrxpkgmgr.delete_crx_zip list
+else
+  result = aemcrxpkgmgr.pkg_query query
+end
+
+puts result
+
+exit 0
+
+# vim:set fileencoding=utf8 fileformat=unix filetype=ruby tabstop=2 expandtab:
