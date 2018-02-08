@@ -5,6 +5,10 @@ Version format based on http://semver.org/
 
 ## [Unreleased]
 
+## [0.1.1] - 2018-01-30
+## Added
+- retry failed get
+
 ## [0.1.0] - 2018-01-30
 ## Added
 - First working version

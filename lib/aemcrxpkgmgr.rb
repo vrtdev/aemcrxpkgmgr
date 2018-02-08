@@ -20,13 +20,25 @@ class AemCrxPkgMgr
   end
 
   def get(uri)
+    retries ||= 100
+    retry_timeout = 3
+
     request = Net::HTTP::Get.new(uri)
     request.basic_auth(@user, @pass)
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
       http.request(request)
     end
+    raise "AemCrxPkgMgr.get Response '#{response.code}' is not a Net::HTTPSuccess" unless response.is_a?(Net::HTTPSuccess)
     response
+  rescue Errno::EADDRNOTAVAIL, RuntimeError => e
+    puts "AemCrxPkgMgr.get : #{e.class} : #{e.message}"
+    will_retry = (retries -= 1) >= 0
+    if will_retry
+      sleep retry_timeout
+      retry
+    end
+    raise
   end
 
   def pkg_query_uri(query)
