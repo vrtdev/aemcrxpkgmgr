@@ -12,6 +12,8 @@ class AemCrxPkgMgr
   def initialize(options = {})
     @host = options[:host] || 'http://localhost:4502'
     @user = options[:user] || 'admin'
+    @max_retries = options[:max_retries] || 100
+    @retry_timeout = options[:retry_timeout] || 3
     @pass = options[:pass]
     @includeversions = options[:includeversions] || false
     @keys_to_extract = options[:keys_to_extract]
@@ -20,8 +22,7 @@ class AemCrxPkgMgr
   end
 
   def get(uri)
-    retries ||= 100
-    retry_timeout = 3
+    retries ||= @max_retries
 
     request = Net::HTTP::Get.new(uri)
     request.basic_auth(@user, @pass)
@@ -31,11 +32,13 @@ class AemCrxPkgMgr
     end
     raise "AemCrxPkgMgr.get Response '#{response.code}' is not a Net::HTTPSuccess" unless response.is_a?(Net::HTTPSuccess)
     response
-  rescue Errno::EADDRNOTAVAIL, RuntimeError => e
+  rescue Errno::EADDRNOTAVAIL
+    raise "AemCrxPkgMgr.get AEM not available"
+  rescue RuntimeError => e
     puts "AemCrxPkgMgr.get : #{e.class} : #{e.message}"
     will_retry = (retries -= 1) >= 0
     if will_retry
-      sleep retry_timeout
+      sleep @retry_timeout
       retry
     end
     raise
