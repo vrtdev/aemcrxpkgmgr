@@ -89,11 +89,11 @@ class AemCrxPkgMgr
     @query_data = JSON.parse(response.body)['results']
 
     unless filtergroup.nil?
-      @query_data = @query_data.select { |item| item[:group] == filtergroup }
+      @query_data = @query_data.select { |item| item['group'] == filtergroup }
     end
 
     unless filtername.nil?
-      @query_data = @query_data.select { |item| item[:name] == filtername }
+      @query_data = @query_data.select { |item| item['name'] == filtername }
     end
 
     extract_keys
