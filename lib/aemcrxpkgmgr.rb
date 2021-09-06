@@ -46,7 +46,10 @@ class AemCrxPkgMgr
 
   def pkg_query_uri(query)
     uri = URI.parse(@host + '/crx/packmgr/list.jsp')
-    params = { q: query, includeVersions: @includeversions }
+    params = { includeVersions: @includeversions }
+    unless query.nil?
+      params['q'] = query
+    end
     uri.query = URI.encode_www_form(params)
     uri
   end
@@ -77,13 +80,21 @@ class AemCrxPkgMgr
     @delete_crx_zip_ok += 1 if response.is_a? Net::HTTPSuccess
   end
 
-  def pkg_query(query)
+  def pkg_query(query, filtergroup, filtername)
     uri = pkg_query_uri(query)
     response = get uri
 
     raise "HTTP response code : #{response.code}, message : #{response.message}" unless response.is_a? Net::HTTPSuccess
 
     @query_data = JSON.parse(response.body)['results']
+
+    unless filtergroup.nil?
+      @query_data = @query_data.select { |item| item[:group] == filtergroup }
+    end
+
+    unless filtername.nil?
+      @query_data = @query_data.select { |item| item[:name] == filtername }
+    end
 
     extract_keys
 

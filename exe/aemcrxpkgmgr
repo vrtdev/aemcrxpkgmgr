@@ -23,8 +23,14 @@ def clidoc
     -p --pass:
     password
 
-    -q --query
+    -q --query:
     query string
+
+    -g --filtergroup:
+    the exact package group name to filter on
+
+    -n --filtername:
+    the exact package name to filter on
 
     -v --versions:
     include other versions of package
@@ -53,6 +59,8 @@ opts = GetoptLong.new(
   ['--user', '-u', GetoptLong::REQUIRED_ARGUMENT],
   ['--pass', '-p', GetoptLong::REQUIRED_ARGUMENT],
   ['--query', '-q', GetoptLong::REQUIRED_ARGUMENT],
+  ['--filtergroup', '-g', GetoptLong::OPTIONAL_ARGUMENT],
+  ['--filtername', '-n', GetoptLong::OPTIONAL_ARGUMENT],
   ['--versions', '-v', GetoptLong::NO_ARGUMENT],
   ['--keys', '-k', GetoptLong::REQUIRED_ARGUMENT],
   ['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
@@ -63,7 +71,9 @@ action = 'query'
 host = 'http://localhost:4502'
 user = 'admin'
 pass = ENV['AEM_PASSWORD']
-query = ''
+query = nil
+filtergroup = nil
+filtername = nil
 includeversions = false
 keys_to_extract = %w[name description version group path]
 output = 'yaml'
@@ -85,6 +95,10 @@ opts.each do |opt, arg|
     pass = arg
   when '--query'
     query = arg
+  when '--filtergroup'
+    filtergroup = arg
+  when '--filtername'
+    filtername = arg
   when '--versions'
     includeversions = true
   when '--keys'
@@ -97,6 +111,9 @@ opts.each do |opt, arg|
             else
               arg.to_i
             end
+  else
+    puts "Unknown option #{opt}"
+    exit 1
   end
 end
 # rubocop:enable Metrics/BlockLength
@@ -115,10 +132,10 @@ case action
 when 'delete_crx_zip'
   aemcrxpkgmgr.output = 'ruby'
   aemcrxpkgmgr.keys_to_extract = ['path']
-  list = aemcrxpkgmgr.pkg_query query
-  result = aemcrxpkgmgr.delete_crx_zip list
+  list = aemcrxpkgmgr.pkg_query(query, filtergroup, filtername)
+  result = aemcrxpkgmgr.delete_crx_zip(list)
 else
-  result = aemcrxpkgmgr.pkg_query query
+  result = aemcrxpkgmgr.pkg_query(query, filtergroup, filtername)
 end
 
 puts result
