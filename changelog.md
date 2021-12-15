@@ -5,6 +5,10 @@ Version format based on http://semver.org/
 
 ## [Unreleased]
 
+## [0.2.1] - 2021-12-15
+
+## Fixed
+- `filtergroup` and `filtername` paramters to pkg_query made optional. (the puppet fact does not pass them)
 ## [0.2.0] - 2021-09-03
 
 ## Added
