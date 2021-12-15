@@ -9,6 +9,7 @@ require 'pp'
 # AEM CRX Package Manager
 class AemCrxPkgMgr
   attr_accessor :includeversions, :keys_to_extract, :output
+
   def initialize(options = {})
     @host = options[:host] || 'http://localhost:4502'
     @user = options[:user] || 'admin'
@@ -19,6 +20,7 @@ class AemCrxPkgMgr
     @keys_to_extract = options[:keys_to_extract]
     @output = options[:output] || 'ruby'
     @debug = options[:debug]
+    puts 'AemCrxPkgMgr Object initialised' if @debug
   end
 
   def get(uri)
@@ -31,9 +33,10 @@ class AemCrxPkgMgr
       http.request(request)
     end
     raise "AemCrxPkgMgr.get Response '#{response.code}' is not a Net::HTTPSuccess" unless response.is_a?(Net::HTTPSuccess)
+
     response
   rescue Errno::EADDRNOTAVAIL
-    raise "AemCrxPkgMgr.get AEM not available"
+    raise 'AemCrxPkgMgr.get AEM not available'
   rescue RuntimeError => e
     puts "AemCrxPkgMgr.get : #{e.class} : #{e.message}"
     will_retry = (retries -= 1) >= 0
@@ -45,17 +48,20 @@ class AemCrxPkgMgr
   end
 
   def pkg_query_uri(query)
+    puts "pkg_query_uri Starting (#{query})" if @debug
     uri = URI.parse(@host + '/crx/packmgr/list.jsp')
     params = { includeVersions: @includeversions }
     unless query.nil?
       params['q'] = query
     end
     uri.query = URI.encode_www_form(params)
+    puts "pkg_query_uri : discovered uri : #{uri}" if @debug
     uri
   end
 
   def delete_crx_zip(list)
     return unless list
+
     @delete_crx_zip_ok = 0
     @delete_crx_zip_status = []
     list.each do |path|
@@ -80,11 +86,15 @@ class AemCrxPkgMgr
     @delete_crx_zip_ok += 1 if response.is_a? Net::HTTPSuccess
   end
 
-  def pkg_query(query, filtergroup, filtername)
+  def pkg_query(query, filtergroup=nil, filtername=nil)
+    puts "pkg_query Starting (#{query}, #{filtergroup}, #{filtername})" if @debug
     uri = pkg_query_uri(query)
     response = get uri
+    puts 'pkg_query : got response' if @debug
 
     raise "HTTP response code : #{response.code}, message : #{response.message}" unless response.is_a? Net::HTTPSuccess
+
+    puts "pkg_query : response.code : #{response.code}" if @debug
 
     @query_data = JSON.parse(response.body)['results']
 
@@ -102,7 +112,10 @@ class AemCrxPkgMgr
   end
 
   def extract_keys
+    puts 'extract_keys : Starting' if @debug
     return if @keys_to_extract.length.zero?
+
+    puts "extract_keys : keys_to_extract : #{@keys_to_extract}" if @debug
     @query_data.map! do |element|
       if @keys_to_extract.length == 1
         element[@keys_to_extract.first]
@@ -125,6 +138,7 @@ class AemCrxPkgMgr
 
   def output_single(data)
     raise 'Resultset contains more than 1 element and "single" was requested.' if data.length != 1
+
     data.first
   end
 end
