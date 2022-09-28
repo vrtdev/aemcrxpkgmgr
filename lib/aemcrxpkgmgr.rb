@@ -20,7 +20,7 @@ class AemCrxPkgMgr
     @keys_to_extract = options[:keys_to_extract]
     @output = options[:output] || 'ruby'
     @debug = options[:debug]
-    puts 'AemCrxPkgMgr Object initialised' if @debug
+    STDERR.puts 'AemCrxPkgMgr Object initialised' if @debug
   end
 
   def get(uri)
@@ -38,7 +38,7 @@ class AemCrxPkgMgr
   rescue Errno::EADDRNOTAVAIL
     raise 'AemCrxPkgMgr.get AEM not available'
   rescue RuntimeError => e
-    puts "AemCrxPkgMgr.get : #{e.class} : #{e.message}"
+    STDERR.puts "AemCrxPkgMgr.get : #{e.class} : #{e.message}"
     will_retry = (retries -= 1) >= 0
     if will_retry
       sleep @retry_timeout
@@ -48,14 +48,14 @@ class AemCrxPkgMgr
   end
 
   def pkg_query_uri(query)
-    puts "pkg_query_uri Starting (#{query})" if @debug
+    STDERR.puts "pkg_query_uri Starting (#{query})" if @debug
     uri = URI.parse(@host + '/crx/packmgr/list.jsp')
     params = { includeVersions: @includeversions }
     unless query.nil?
       params['q'] = query
     end
     uri.query = URI.encode_www_form(params)
-    puts "pkg_query_uri : discovered uri : #{uri}" if @debug
+    STDERR.puts "pkg_query_uri : discovered uri : #{uri}" if @debug
     uri
   end
 
@@ -87,14 +87,14 @@ class AemCrxPkgMgr
   end
 
   def pkg_query(query, filtergroup=nil, filtername=nil)
-    puts "pkg_query Starting (#{query}, #{filtergroup}, #{filtername})" if @debug
+    STDERR.puts "pkg_query Starting (#{query}, #{filtergroup}, #{filtername})" if @debug
     uri = pkg_query_uri(query)
     response = get uri
-    puts 'pkg_query : got response' if @debug
+    STDERR.puts 'pkg_query : got response' if @debug
 
     raise "HTTP response code : #{response.code}, message : #{response.message}" unless response.is_a? Net::HTTPSuccess
 
-    puts "pkg_query : response.code : #{response.code}" if @debug
+    STDERR.puts "pkg_query : response.code : #{response.code}" if @debug
 
     @query_data = JSON.parse(response.body)['results']
 
@@ -112,10 +112,10 @@ class AemCrxPkgMgr
   end
 
   def extract_keys
-    puts 'extract_keys : Starting' if @debug
+    STDERR.puts 'extract_keys : Starting' if @debug
     return if @keys_to_extract.length.zero?
 
-    puts "extract_keys : keys_to_extract : #{@keys_to_extract}" if @debug
+    STDERR.puts "extract_keys : keys_to_extract : #{@keys_to_extract}" if @debug
     @query_data.map! do |element|
       if @keys_to_extract.length == 1
         element[@keys_to_extract.first]
