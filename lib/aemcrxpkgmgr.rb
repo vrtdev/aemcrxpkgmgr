@@ -19,7 +19,7 @@ class AemCrxPkgMgr
     @includeversions = options[:includeversions] || false
     @keys_to_extract = options[:keys_to_extract]
     @output = options[:output] || 'ruby'
-    @debug = options[:debug]
+    @debug = options[:debug] || false
     STDERR.puts 'AemCrxPkgMgr Object initialised' if @debug
   end
 

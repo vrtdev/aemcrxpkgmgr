@@ -47,7 +47,7 @@ def clidoc
     ruby: native Array/Hash output
 
     -d --debug:
-    debug ....
+    enable debug output on stderr
 
   CLIDOC
 end
@@ -64,7 +64,7 @@ opts = GetoptLong.new(
   ['--versions', '-v', GetoptLong::NO_ARGUMENT],
   ['--keys', '-k', GetoptLong::REQUIRED_ARGUMENT],
   ['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
-  ['--debug', '-d', GetoptLong::OPTIONAL_ARGUMENT]
+  ['--debug', '-d', GetoptLong::NO_ARGUMENT]
 )
 
 action = 'query'
@@ -77,7 +77,7 @@ filtername = nil
 includeversions = false
 keys_to_extract = %w[name description version group path]
 output = 'yaml'
-debug = 0
+debug = false
 
 # rubocop:disable Metrics/BlockLength
 opts.each do |opt, arg|
@@ -106,13 +106,9 @@ opts.each do |opt, arg|
   when '--output'
     output = arg
   when '--debug'
-    debug = if arg == ''
-              1
-            else
-              arg.to_i
-            end
+    debug = true
   else
-    puts "Unknown option #{opt}"
+    STDERR.puts "Unknown option #{opt}"
     exit 1
   end
 end

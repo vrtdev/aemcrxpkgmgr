@@ -5,12 +5,15 @@ Version format based on http://semver.org/
 
 ## [Unreleased]
 
-## [0.2.1] - 2021-12-15
+## [0.2.2] - 2022-09-28
+## Fixed
+- `--debug` did not function properly, causing debug output to be printed on stdout by default, which breaks valid (json) output.
 
+## [0.2.1] - 2021-12-15
 ## Fixed
 - `filtergroup` and `filtername` paramters to pkg_query made optional. (the puppet fact does not pass them)
-## [0.2.0] - 2021-09-03
 
+## [0.2.0] - 2021-09-03
 ## Added
 - `--filtergroup` and `--filtername` options to provide extra filtering on queried packages as `--query` does not provide exact matches.
 
